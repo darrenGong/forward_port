@@ -50,6 +50,7 @@ func GetForwardPort(port uint16) (*ForwardPort, error) {
 		SrcConn: nil,
 		DstConn: nil,
 		Timeout: 2 * time.Second,
+		QuitChan: make(chan int),
 	}, nil
 }
 
@@ -69,7 +70,7 @@ func StartServer(addr string, port uint16) error {
 
 	var chanConn chan net.Conn
 	var tcpServer TcpServer
-	var forwardPort *ForwardPort
+	forwardPort, _ := GetForwardPort(port)
 	tcpServer.Listener = localListener
 	go AcceptServer(localListener, chanConn)
 

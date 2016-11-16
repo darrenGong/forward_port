@@ -20,7 +20,7 @@ var (
 
 func GetAddrPort(laddr string) (string, uint16, error) {
 	strArray := strings.Split(laddr, ":")
-	if len(strArray[0]) != 2 {
+	if len(strArray) != 2 {
 		uflog.ERRORF("Falied to split src addr[%s]\n", laddr)
 		return "", 0, errors.New("Falied to split src addr")
 	}
