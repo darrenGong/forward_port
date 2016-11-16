@@ -7,6 +7,7 @@ import (
 	"uframework/log"
 	"forward_port/src"
 	"net"
+	"forward_port/rule"
 )
 
 const (
@@ -14,7 +15,8 @@ const (
 )
 
 var (
-	configFile = flag.String("c", "F:\\go-dev\\src\\forward_port\\config\\config.json", "configuration, json format")
+	configFile = flag.String("c", ".\\config\\config.json", "configuration, json format")
+	ruleFile = ".\\etc\\Rule_Egi5Th.json"
 )
 
 func GetAddrByInterfaceName(interfaceName string) string {
@@ -40,7 +42,11 @@ func main() {
 		log.Fatalf("Failed to parse config: %s, err: %v\n", *configFile, err)
 	}
 	uflog.InitLogger(Config.LogPath, Config.LogPrefix, "", LOG_SIZE, "DEBUG")
-
 	addr := GetAddrByInterfaceName(Config.InterfaceName)
+
+	pRule := new(rule.Rule)
+	if err := rule.LoadRule(ruleFile, pRule); err != nil {
+		log.Fatalf("Failed to load rule json file[%s]", ruleFile)
+	}
 	forwardPort.StartServer(addr, Config.Port)
 }
