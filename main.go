@@ -15,8 +15,8 @@ const (
 )
 
 var (
-	configFile = flag.String("c", ".\\config\\config.json", "configuration, json format")
-	ruleFile = ".\\etc\\Rule_Egi5Th.json"
+	configFile = flag.String("c", "./config/config.json", "configuration, json format")
+	ruleFile = "./etc/Rule_Egi5Th.json"
 )
 
 func GetAddrByInterfaceName(interfaceName string) string {
