@@ -1,0 +1,6 @@
+{
+  "InterFaceName": "eth0",
+  "Port": 8000,
+  "LogPath": "./log/",
+  "LogPrefix": "log.forwardPort."
+}
