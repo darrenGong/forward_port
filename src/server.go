@@ -1,19 +1,19 @@
 package forwardPort
 
 import (
-	"net"
-	"uframework/log"
 	"errors"
 	"fmt"
 	"forward_port/rule"
-	"time"
+	"net"
 	"sync"
+	"time"
+	"uframework/log"
 )
 
 var (
 	gServerForwardPortMap map[uint16]*TcpServer
-	gForwardPortMutex sync.Mutex
-	gStopWait sync.WaitGroup
+	gForwardPortMutex     sync.Mutex
+	gStopWait             sync.WaitGroup
 )
 
 type TcpServer struct {
@@ -43,13 +43,13 @@ func GetForwardPort(port uint16) (*ForwardPort, error) {
 	}
 
 	return &ForwardPort{
-		SrcAddr: srcAddr,
-		SrcPort: srcPort,
-		DstAddr: dstAddr,
-		DstPort: dstPort,
-		SrcConn: nil,
-		DstConn: nil,
-		Timeout: 2 * time.Second,
+		SrcAddr:  srcAddr,
+		SrcPort:  srcPort,
+		DstAddr:  dstAddr,
+		DstPort:  dstPort,
+		SrcConn:  nil,
+		DstConn:  nil,
+		Timeout:  2 * time.Second,
 		QuitChan: make(chan int),
 	}, nil
 }
@@ -77,6 +77,7 @@ func StartServer(addr string, port uint16) error {
 	for {
 		select {
 		case srcConn := <-chanConn:
+			uflog.INFOF("New connection [LocalAddr:%s]", srcConn.RemoteAddr().String())
 			srcConn.LocalAddr().String()
 			forwardPort, _ = GetForwardPort(port)
 			forwardPort.SrcConn = srcConn
@@ -86,7 +87,7 @@ func StartServer(addr string, port uint16) error {
 				uflog.ERRORF("Dst laddr is not exit: %d", port)
 				continue
 			}
-			dstConn, err := net.DialTimeout("tcp", laddr, 5 * time.Second)
+			dstConn, err := net.DialTimeout("tcp", laddr, 5*time.Second)
 			if err != nil {
 				uflog.ERRORF("Connection failed to dst: %s", laddr)
 				continue
@@ -106,7 +107,7 @@ func StartServer(addr string, port uint16) error {
 	return nil
 }
 
-func AcceptServer(localListener net.Listener, chanConn chan <- net.Conn) error {
+func AcceptServer(localListener net.Listener, chanConn chan<- net.Conn) error {
 	for {
 		srcConn, err := localListener.Accept()
 		if err != nil {

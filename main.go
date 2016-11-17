@@ -7,6 +7,7 @@ import (
 	"forward_port/src"
 	"log"
 	"net"
+	"strings"
 	"uframework/log"
 )
 
@@ -30,7 +31,7 @@ func GetAddrByInterfaceName(interfaceName string) string {
 		log.Fatalf("Failed to parse addr, err: %v\n", err)
 	}
 
-	return addr[0].String()
+	return strings.Split(addr[0].String(), "/")[0]
 }
 
 func main() {
