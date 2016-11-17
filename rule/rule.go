@@ -1,12 +1,13 @@
 package rule
 
 import (
-	"io/ioutil"
-	"uframework/log"
-	"errors"
 	"encoding/json"
-	"strings"
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"strconv"
+	"strings"
+	"uframework/log"
 )
 
 type Rule struct {
@@ -56,7 +57,17 @@ func Getladdr(port uint16, isSrc bool) (string, error) {
 		laddr = gRuleMap[port].DstAddr
 	}
 
-	return laddr, nil
+	addr, port, err := GetAddrPort(laddr)
+	if err != nil {
+		return "", err
+	}
+
+	if "" == addr {
+		uflog.WARNF("Use localhost addr for addr is empty, laddr:%s", laddr)
+		addr = "localhost"
+	}
+
+	return fmt.Sprintf("%s:%d", addr, port), nil
 }
 
 func LoadRule(ruleFile string, rule *Rule) error {

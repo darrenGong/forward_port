@@ -1,11 +1,11 @@
 package forwardPort
 
 import (
+	"errors"
+	"io"
 	"net"
 	"time"
 	"uframework/log"
-	"errors"
-	"io"
 )
 
 var (
@@ -27,19 +27,19 @@ type ForwardPort struct {
 func CopyBytes(dstConn, srcConn net.Conn) error {
 	lenByte, err := io.Copy(dstConn, srcConn)
 	if err != nil {
-		uflog.Debugf("Send error from src[%s] to dst[%s]\n",
+		uflog.DEBUGF("Send error from src[%s] to dst[%s]\n",
 			srcConn.LocalAddr(), dstConn.RemoteAddr())
 		return err
 	}
-	uflog.Debugf("Send %d bytes from src[%s] to dst[%s]\n",
+	uflog.DEBUGF("Send %d bytes from src[%s] to dst[%s]\n",
 		lenByte, srcConn.LocalAddr(), dstConn.RemoteAddr())
-
 	return nil
 }
 
 func (fp *ForwardPort) ForwardWork() error {
-	if fp.SrcConn == nil {
-		uflog.ERROR("Invalid conn[SrcConn is nil]\n")
+	if nil == fp.SrcConn ||
+		nil == fp.DstConn {
+		uflog.ERROR("Invalid conn[Conn is nil]\n")
 		return errors.New("Invalid conn")
 	}
 
@@ -49,6 +49,7 @@ func (fp *ForwardPort) ForwardWork() error {
 			fp.CloseConn()
 			return err
 		}
+		fp.CloseConn()
 
 		if err := CopyBytes(fp.SrcConn, fp.DstConn); err != nil {
 			uflog.DEBUGF("Connection have closed dst -> src")
@@ -59,9 +60,14 @@ func (fp *ForwardPort) ForwardWork() error {
 	return nil
 }
 
-func (fp *ForwardPort)CloseConn() {
-	fp.DstConn.Close()
-	fp.SrcConn.Close()
+func (fp *ForwardPort) CloseConn() {
+	if fp.DstConn != nil {
+		fp.DstConn.Close()
+	}
+
+	if fp.SrcConn != nil {
+		fp.SrcConn.Close()
+	}
 
 	fp.QuitChan <- 0
 }

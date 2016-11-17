@@ -62,10 +62,10 @@ func StartServer(addr string, port uint16) error {
 	uflog.INFOF("Start server, listen %s:%d\n", addr, port)
 
 	laddr, _ := Getladdr(addr, port)
-	fmt.Println(laddr)
 	localListener, err := net.Listen("tcp", laddr)
 	if err != nil {
 		uflog.ERRORF("Failed to listen [%s]\n", laddr)
+		fmt.Println(err)
 		return errors.New("Failed to listen")
 	}
 
@@ -88,7 +88,8 @@ func StartServer(addr string, port uint16) error {
 			}
 			dstConn, err := net.DialTimeout("tcp", dstLaddr, 5*time.Second)
 			if err != nil {
-				uflog.ERRORF("Connection failed to dst: %s", laddr)
+				uflog.ERRORF("Connection failed to dst: %s", dstLaddr)
+				forwardPort.CloseConn()
 				continue
 			}
 			forwardPort.DstConn = dstConn
@@ -98,7 +99,6 @@ func StartServer(addr string, port uint16) error {
 			go forwardPort.ForwardWork()
 		case <-forwardPort.QuitChan:
 			uflog.DEBUGF("Close connection [src: %s]", forwardPort.SrcConn.RemoteAddr().String())
-			forwardPort.CloseConn()
 			DelServer(port, &tcpServer)
 		default:
 			// nothing
@@ -113,11 +113,10 @@ func AcceptServer(localListener net.Listener, chanConn chan net.Conn) error {
 		srcConn, err := localListener.Accept()
 		if err != nil {
 			uflog.ERRORF("Failed to accept connection, err :%v\n", err)
-			fmt.Println(err)
 			return err
 		}
 		chanConn <- srcConn
-		fmt.Printf("New connetion [srcAddr:%s]\n", srcConn.RemoteAddr().String())
+		uflog.DEBUGF("New connetion [srcAddr:%s]\n", srcConn.RemoteAddr().String())
 	}
 }
 

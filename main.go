@@ -6,8 +6,6 @@ import (
 	"forward_port/rule"
 	"forward_port/src"
 	"log"
-	"net"
-	"strings"
 	"uframework/log"
 )
 
@@ -20,20 +18,6 @@ var (
 	ruleFile   = "etc/Rule_Egi5Th.json"
 )
 
-func GetAddrByInterfaceName(interfaceName string) string {
-	Interface, err := net.InterfaceByName(interfaceName)
-	if err != nil {
-		log.Fatalf("Failed to parse interface name[%s]\n", interfaceName)
-	}
-
-	addr, err := Interface.Addrs()
-	if err != nil {
-		log.Fatalf("Failed to parse addr, err: %v\n", err)
-	}
-
-	return strings.Split(addr[0].String(), "/")[0]
-}
-
 func main() {
 	flag.Parse()
 
@@ -42,7 +26,7 @@ func main() {
 		log.Fatalf("Failed to parse config: %s, err: %v\n", *configFile, err)
 	}
 	uflog.InitLogger(Config.LogPath, Config.LogPrefix, "", LOG_SIZE, "DEBUG")
-	addr := GetAddrByInterfaceName(Config.InterfaceName)
+	addr := forwardPort.GetAddrByInterfaceName(Config.InterfaceName)
 
 	pRule := new(rule.Rule)
 	if err := rule.LoadRule(ruleFile, pRule); err != nil {
