@@ -89,7 +89,6 @@ func StartServer(addr string, port uint16) error {
 			dstConn, err := net.DialTimeout("tcp", dstLaddr, 5*time.Second)
 			if err != nil {
 				uflog.ERRORF("Connection failed to dst: %s", laddr)
-				fmt.Println(err)
 				continue
 			}
 			forwardPort.DstConn = dstConn
