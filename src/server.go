@@ -12,8 +12,8 @@ import (
 
 var (
 	gServerForwardPortMap = make(map[uint16]*TcpServer)
-	gForwardPortMutex     sync.Mutex
-	gStopWait             sync.WaitGroup
+	gForwardPortMutex sync.Mutex
+	gStopWait sync.WaitGroup
 )
 
 type TcpServer struct {
@@ -86,7 +86,7 @@ func StartServer(addr string, port uint16) error {
 				uflog.ERRORF("Dst laddr is not exit: %d", port)
 				continue
 			}
-			dstConn, err := net.DialTimeout("tcp", dstLaddr, 5*time.Second)
+			dstConn, err := net.DialTimeout("tcp", dstLaddr, 5 * time.Second)
 			if err != nil {
 				uflog.ERRORF("Connection failed to dst: %s", dstLaddr)
 				forwardPort.CloseConn()
@@ -96,10 +96,12 @@ func StartServer(addr string, port uint16) error {
 			tcpServer.ForwardPort = forwardPort
 			AddServer(port, &tcpServer)
 
-			go forwardPort.ForwardWork()
+			forwardPort.ForwardWork()
 		case <-forwardPort.QuitChan:
-			uflog.DEBUGF("Close connection [src: %s]", forwardPort.SrcConn.RemoteAddr().String())
-			DelServer(port, &tcpServer)
+			if GetServer(port) != nil {
+				uflog.DEBUGF("Close connection [src: %s]", forwardPort.SrcConn.RemoteAddr().String())
+				DelServer(port, &tcpServer)
+			}
 		default:
 			// nothing
 		}
@@ -134,4 +136,14 @@ func DelServer(port uint16, server *TcpServer) {
 
 	delete(gServerForwardPortMap, port)
 	gStopWait.Done()
+}
+
+func GetServer(port uint16) *TcpServer {
+	gForwardPortMutex.Lock()
+	defer gForwardPortMutex.Unlock()
+	if server, ok := gServerForwardPortMap[port]; ok {
+		return server
+	} else {
+		return nil
+	}
 }
