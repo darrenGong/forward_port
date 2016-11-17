@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	gServerForwardPortMap map[uint16]*TcpServer
+	gServerForwardPortMap = make(map[uint16]*TcpServer)
 	gForwardPortMutex     sync.Mutex
 	gStopWait             sync.WaitGroup
 )
@@ -62,13 +62,14 @@ func StartServer(addr string, port uint16) error {
 	uflog.INFOF("Start server, listen %s:%d\n", addr, port)
 
 	laddr, _ := Getladdr(addr, port)
+	fmt.Println(laddr)
 	localListener, err := net.Listen("tcp", laddr)
 	if err != nil {
 		uflog.ERRORF("Failed to listen [%s]\n", laddr)
 		return errors.New("Failed to listen")
 	}
 
-	var chanConn chan net.Conn
+	chanConn := make(chan net.Conn)
 	var tcpServer TcpServer
 	forwardPort, _ := GetForwardPort(port)
 	tcpServer.Listener = localListener
@@ -77,8 +78,6 @@ func StartServer(addr string, port uint16) error {
 	for {
 		select {
 		case srcConn := <-chanConn:
-			uflog.INFOF("New connection [LocalAddr:%s]", srcConn.RemoteAddr().String())
-			srcConn.LocalAddr().String()
 			forwardPort, _ = GetForwardPort(port)
 			forwardPort.SrcConn = srcConn
 
@@ -87,9 +86,10 @@ func StartServer(addr string, port uint16) error {
 				uflog.ERRORF("Dst laddr is not exit: %d", port)
 				continue
 			}
-			dstConn, err := net.DialTimeout("tcp", laddr, 5*time.Second)
+			dstConn, err := net.DialTimeout("tcp", dstLaddr, 5*time.Second)
 			if err != nil {
 				uflog.ERRORF("Connection failed to dst: %s", laddr)
+				fmt.Println(err)
 				continue
 			}
 			forwardPort.DstConn = dstConn
@@ -98,23 +98,27 @@ func StartServer(addr string, port uint16) error {
 
 			go forwardPort.ForwardWork()
 		case <-forwardPort.QuitChan:
+			uflog.DEBUGF("Close connection [src: %s]", forwardPort.SrcConn.RemoteAddr().String())
 			forwardPort.CloseConn()
 			DelServer(port, &tcpServer)
+		default:
+			// nothing
 		}
-
 	}
 
 	return nil
 }
 
-func AcceptServer(localListener net.Listener, chanConn chan<- net.Conn) error {
+func AcceptServer(localListener net.Listener, chanConn chan net.Conn) error {
 	for {
 		srcConn, err := localListener.Accept()
 		if err != nil {
 			uflog.ERRORF("Failed to accept connection, err :%v\n", err)
+			fmt.Println(err)
 			return err
 		}
 		chanConn <- srcConn
+		fmt.Printf("New connetion [srcAddr:%s]\n", srcConn.RemoteAddr().String())
 	}
 }
 
