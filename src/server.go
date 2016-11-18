@@ -12,8 +12,8 @@ import (
 
 var (
 	gServerForwardPortMap = make(map[uint16]*TcpServer)
-	gForwardPortMutex sync.Mutex
-	gStopWait sync.WaitGroup
+	gForwardPortMutex     sync.Mutex
+	gStopWait             sync.WaitGroup
 )
 
 type TcpServer struct {
@@ -86,7 +86,7 @@ func StartServer(addr string, port uint16) error {
 				uflog.ERRORF("Dst laddr is not exit: %d", port)
 				continue
 			}
-			dstConn, err := net.DialTimeout("tcp", dstLaddr, 5 * time.Second)
+			dstConn, err := net.DialTimeout("tcp", dstLaddr, 5*time.Second)
 			if err != nil {
 				uflog.ERRORF("Connection failed to dst: %s", dstLaddr)
 				forwardPort.CloseConn()
@@ -94,7 +94,12 @@ func StartServer(addr string, port uint16) error {
 			}
 			forwardPort.DstConn = dstConn
 			tcpServer.ForwardPort = forwardPort
-			AddServer(port, &tcpServer)
+			if err := AddServer(port, &tcpServer); err != nil {
+				uflog.ERRORF("Failed to add server[port:%d]", port)
+				srcConn.Close()
+				dstConn.Close()
+				continue
+			}
 
 			forwardPort.ForwardWork()
 		case <-forwardPort.QuitChan:
@@ -122,12 +127,18 @@ func AcceptServer(localListener net.Listener, chanConn chan net.Conn) error {
 	}
 }
 
-func AddServer(port uint16, server *TcpServer) {
+func AddServer(port uint16, server *TcpServer) error {
+	if GetServer(port) != nil {
+		uflog.ERRORF("Repeat port, can not add [port:%d]", port)
+		return errors.New("Repeat port")
+	}
+
 	gForwardPortMutex.Lock()
 	defer gForwardPortMutex.Unlock()
 
 	gServerForwardPortMap[port] = server
 	gStopWait.Add(1)
+	return nil
 }
 
 func DelServer(port uint16, server *TcpServer) {

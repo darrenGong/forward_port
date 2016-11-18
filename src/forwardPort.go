@@ -13,27 +13,27 @@ var (
 )
 
 type ForwardPort struct {
-	SrcAddr  string
-	SrcPort  uint16
-	DstAddr  string
-	DstPort  uint16
-	SrcConn  net.Conn
-	DstConn  net.Conn
-	Timeout  time.Duration
+	SrcAddr string
+	SrcPort uint16
+	DstAddr string
+	DstPort uint16
+	SrcConn net.Conn
+	DstConn net.Conn
+	Timeout time.Duration
 
 	QuitChan chan int
 }
 
-func (fp *ForwardPort)CopyBytes(dstConn, srcConn net.Conn) error {
+func (fp *ForwardPort) CopyBytes(dstConn, srcConn net.Conn) error {
 	for {
 		lenByte, err := io.Copy(dstConn, srcConn)
 		if err != nil {
 			uflog.DEBUGF("Send error from src[%s] to dst[%s]\n",
-				srcConn.LocalAddr(), dstConn.RemoteAddr())
+				srcConn.RemoteAddr(), dstConn.RemoteAddr())
 			return err
 		}
 		uflog.DEBUGF("Send %d bytes from src[%s] to dst[%s]\n",
-			lenByte, srcConn.LocalAddr(), dstConn.RemoteAddr())
+			lenByte, srcConn.RemoteAddr(), dstConn.RemoteAddr())
 		fp.CloseConn()
 		return nil
 	}
