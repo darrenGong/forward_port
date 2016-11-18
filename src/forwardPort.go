@@ -34,8 +34,8 @@ func (fp *ForwardPort)CopyBytes(dstConn, srcConn net.Conn) error {
 		}
 		uflog.DEBUGF("Send %d bytes from src[%s] to dst[%s]\n",
 			lenByte, srcConn.LocalAddr(), dstConn.RemoteAddr())
-
 		fp.CloseConn()
+		return nil
 	}
 
 	return nil

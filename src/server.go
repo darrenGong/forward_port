@@ -143,7 +143,7 @@ func GetServer(port uint16) *TcpServer {
 	defer gForwardPortMutex.Unlock()
 	if server, ok := gServerForwardPortMap[port]; ok {
 		return server
-	} else {
-		return nil
 	}
+
+	return nil
 }
